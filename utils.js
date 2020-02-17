@@ -1,5 +1,9 @@
 const path = require("path");
 
-export function isModXML(file) {
+function isModXML(file) {
   path.basename(file).toLowerCase() === "mod.xml";
 }
+
+module.exports = {
+  isModXML
+};
