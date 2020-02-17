@@ -3,30 +3,36 @@ const path = require("path");
 const { fs, log, util } = require("vortex-api");
 const winapi = require("winapi-bindings");
 
-const { isModXML } = require("./utils");
+const { isModXML, isModInstaller } = require("./utils");
 
 // Nexus Mods domain for the game. e.g. nexusmods.com/bloodstainedritualofthenight
 const GAME_ID = "noita";
-
 //Steam Application ID, you can get this from https://steamdb.info/apps/
 const STEAMAPP_ID = 881100;
-
 //GOG Application ID, you can get this from https://www.gogdb.org/
 const GOGAPP_ID = 1310457090;
 
-function main(context) {
-  //This is the main function Vortex will run when detecting the game extension.
+const GAME_NAME = "Noita";
+const MOD_DIR = () => "mods";
+const EXE_NAME = "noita.exe";
+const ART_NAME = "gameart.jpg";
+const INSTALLER_PRIORITY = 25;
 
+function main(context) {
   context.registerGame({
     id: GAME_ID,
-    name: "Noita",
+    name: GAME_NAME,
     mergeMods: true,
     queryPath: findGame,
     supportedTools: [],
-    queryModPath: () => "mods",
-    logo: "gameart.jpg",
-    executable: () => "noita.exe",
-    requiredFiles: ["noita.exe", "mods/PLACE_MODS_HERE"],
+    queryModPath: MOD_DIR,
+    logo: ART_NAME,
+    executable: () => EXE_NAME,
+    requiredFiles: [
+      EXE_NAME,
+      // REVIEW: maybe this is not required, just mods/ ?
+      "mods/PLACE_MODS_HERE"
+    ],
     environment: {
       SteamAPPId: STEAMAPP_ID.toString()
     },
@@ -37,8 +43,8 @@ function main(context) {
   });
 
   context.registerInstaller(
-    "noita-mod",
-    25,
+    `${GAME_ID}-mod`,
+    INSTALLER_PRIORITY,
     testSupportedContent,
     installContent
   );
@@ -56,14 +62,7 @@ function testSupportedContent(files, gameId) {
   let supported = gameId === GAME_ID && files.find(isModXML) !== undefined;
 
   // Test for a mod installer.
-  if (
-    supported &&
-    files.find(
-      file =>
-        path.basename(file).toLowerCase() === "moduleconfig.xml" &&
-        path.basename(path.dirname(file)).toLowerCase() === "fomod"
-    )
-  ) {
+  if (supported && isModInstaller) {
     supported = false;
   }
 
